@@ -6,6 +6,9 @@ __author__ = "Pierre Nugues"
 import os
 import operator
 
+SUBJ = 'nsubj'
+OBJ = 'obj'
+
 
 def get_files(dir, suffix):
     """
@@ -76,12 +79,23 @@ def save(file, formatted_corpus, column_names):
 
 def find_pairs(formatted_corpus):
     counter=0
-    pairs = {}
+
+    sentences = []
+    # Convert sentence lists to dicts
     for sentence in formatted_corpus:
+        new_sentence = {}
         for word in sentence:
-            if word['deprel'] == 'SS':
-                verb_index = int(word['head'])
-                verb = str.lower(sentence[verb_index]['form'])
+            id_n = word['id']
+            new_sentence[id_n] = word
+        sentences.append(new_sentence)
+
+    pairs = {}
+    for sentence in sentences:
+        for word_id in sentence:
+            word = sentence[word_id]
+            if '-' not in word_id and word['deprel'] == SUBJ:
+                verb_key = word['head']
+                verb = str.lower(sentence[verb_key]['form'])
                 subject = str.lower(word['form'])
                 counter+=1
                 pair = (subject, verb)
@@ -98,19 +112,32 @@ def find_pairs(formatted_corpus):
 
 def find_triples(formatted_corpus):
     counter=0
-    triplets = {}
+
+    sentences = []
+    # Convert sentence lists to dicts
     for sentence in formatted_corpus:
+        new_sentence = {}
         for word in sentence:
-            if word['deprel'] == 'SS':
-                verb_index = word['head']
-                for word2 in sentence:
-                    if word2['deprel'] == 'OO' and word2['head'] == verb_index:
-                        # FOUND TRIPLE
+            id_n = word['id']
+            new_sentence[id_n] = word
+        sentences.append(new_sentence)
+
+
+    triplets = {}
+    for sentence in sentences:
+        for word_id in sentence:
+            word = sentence[word_id]
+            if '-' not in word_id and word['deprel'] == SUBJ:
+                verb_key = word['head']
+                for word2_id in sentence:
+                    word2 = sentence[word2_id]
+                    if '-' not in word2_id and word2['deprel'] == OBJ and word2['head'] == verb_key:
+                        # FOUND TRIPLET
                         counter+=1
-                        verb = str.lower(sentence[int(verb_index)]['form'])
+                        verb = str.lower(sentence[verb_key]['form'])
                         subject = str.lower(word['form'])
-                        ob = str.lower(word2['form'])
-                        triplet = (subject, verb, ob)
+                        obj = str.lower(word2['form'])
+                        triplet = (subject, verb, obj)
                         if triplet in triplets:
                             triplets[triplet] += 1
                         else:
@@ -119,8 +146,21 @@ def find_triples(formatted_corpus):
     sorted_triplets=sorted(triplets.items(), key=operator.itemgetter(1), reverse=True)
     print('Number of triplets in corpus: ' + str(counter))
     print('Most frequent triplets: ')
-    for i in range (0,5):
-        print(sorted_triplets[i])
+    if len(sorted_triplets) > 4:
+        for i in range (0,5):
+            print(sorted_triplets[i])
+    else:
+        print('')
+        print('')
+        print('')
+        print('')
+        print('NOT ENOUGH TRIPLETS FOUND!!')
+        print("Only found {} triplets".format(len(sorted_triplets)))
+        print('')
+        print('')
+        print('')
+        print('')
+        
 
 
 if __name__ == '__main__':
@@ -135,19 +175,18 @@ if __name__ == '__main__':
     print(train_file, len(formatted_corpus))
     #print(formatted_corpus[0])
 
-    find_pairs(formatted_corpus)
-    find_triples(formatted_corpus)
+    #find_pairs(formatted_corpus)
+    #find_triples(formatted_corpus)
 
     column_names_u = ['id', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'head', 'deprel', 'deps', 'misc']
 
     #ord = form
 
     
-    """
-    files = get_files('../../corpus/ud-treebanks-v1.3/', 'train.conllu')
+    files = get_files('ud-treebanks-conll2017', 'train.conllu')
     for train_file in files:
         sentences = read_sentences(train_file)
         formatted_corpus = split_rows(sentences, column_names_u)
         print(train_file, len(formatted_corpus))
-        print(formatted_corpus[0])
-    """
+        find_pairs(formatted_corpus)
+        find_triples(formatted_corpus)
