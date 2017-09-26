@@ -6,6 +6,9 @@ __author__ = "Pierre Nugues"
 import os
 import operator
 
+SUBJ = 'SS'
+OBJ = 'OO'
+
 SUBJ = 'nsubj'
 OBJ = 'obj'
 
@@ -175,18 +178,19 @@ if __name__ == '__main__':
     print(train_file, len(formatted_corpus))
     #print(formatted_corpus[0])
 
-    #find_pairs(formatted_corpus)
-    #find_triples(formatted_corpus)
+    if SUBJ == 'SS':
+        find_pairs(formatted_corpus)
+        find_triples(formatted_corpus)
 
     column_names_u = ['id', 'form', 'lemma', 'upostag', 'xpostag', 'feats', 'head', 'deprel', 'deps', 'misc']
 
     #ord = form
 
-    
-    files = get_files('ud-treebanks-conll2017', 'train.conllu')
-    for train_file in files:
-        sentences = read_sentences(train_file)
-        formatted_corpus = split_rows(sentences, column_names_u)
-        print(train_file, len(formatted_corpus))
-        find_pairs(formatted_corpus)
-        find_triples(formatted_corpus)
+    if SUBJ == 'nsubj':
+        files = get_files('ud-treebanks-conll2017', 'train.conllu')
+        for train_file in files:
+            sentences = read_sentences(train_file)
+            formatted_corpus = split_rows(sentences, column_names_u)
+            print(train_file, len(formatted_corpus))
+            find_pairs(formatted_corpus)
+            find_triples(formatted_corpus)
